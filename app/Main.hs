@@ -44,7 +44,7 @@ main = do
 
       [cs',adm',magic'] -> do
         let
-            scriptFile   = "en-nft-registration-test_060923.plutus"
+            scriptFile   = "en-nft-registration-new_datum_080923.plutus"
             pkh          = addrToPkh $ either (\_ -> error "Not a valid address") id (parseShelleyAddr adm') -- "addr_test1qqgagc0fy6nm0qe4h8zqxsg952tqjeg7l7j0agd0cx4u25zcer3t74yn0dm8xqnr7rtwhkqcrpsmphwcf0mlmn39ry6qxvept2"
             cs = currencySymbol $ fromString cs' -- "14696a4676909f4e3cb1f2e60e2e08e5abed70caf5c02699be971139"
             params          = ScriptParams

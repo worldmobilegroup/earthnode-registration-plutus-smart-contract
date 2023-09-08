@@ -48,7 +48,7 @@ validateUnregister ScriptParams{..} EnRegistration{..} info
     | otherwise = False
     where
       -- In the valuePaidTo original version is an error still needs investiagtion, at the moment the is NFT paid constraint
-      -- is deactivated on testnet but the owner signature on no ScriptOutputs are used.
+      -- is deactivated on testnet but the owner signature and no ScriptOutputs are used.
       isEnNftSpent :: Bool
       isEnNftSpent = Value.valueOf (valuePaidTo' info enOwner ) pNftCs enUsedNftTn == 1
 

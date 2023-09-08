@@ -28,6 +28,9 @@ import           Data.Aeson           (FromJSON, ToJSON)
 import           Ledger
 import           Playground.Contract  (Generic)
 --import           Plutus.V2.Ledger.Api (Map) --Credential
+import           Plutus.V2.Ledger.Api ( Credential (PubKeyCredential,ScriptCredential),
+                                        PubKeyHash, UnsafeFromData,
+                                        Value, unsafeFromBuiltinData)
 import           Plutus.V2.Ledger.Api
 import qualified PlutusTx
 import           PlutusTx.Prelude     ()
@@ -49,6 +52,7 @@ data EnRegistration = EnRegistration
             , enCceAddress      :: BuiltinByteString
             , enUsedNftTn       :: TokenName
             , enOwner           :: PubKeyHash
+            , enSignature       :: BuiltinByteString
         } deriving (Prelude.Show, Generic, FromJSON, ToJSON, Prelude.Eq, Prelude.Ord)
 PlutusTx.makeIsDataIndexed ''EnRegistration [('EnRegistration, 0)]
 PlutusTx.makeLift ''EnRegistration
