@@ -10,40 +10,37 @@
 {-# LANGUAGE TemplateHaskell   #-}
 {-# options_ghc -fno-specialise         #-}
 
-module OffChain
+module ENOP.MpOffChain
   where
 import           Cardano.Api.Shelley            (PlutusScript (..),
                                                  PlutusScriptV2)
 import           Codec.Serialise
 import qualified Data.ByteString.Lazy           as LB
 import qualified Data.ByteString.Short          as SBS
-import qualified Ledger
-import           OnChain                        (vUt)
 import qualified Plutus.Script.Utils.V2.Scripts as Utils
-import qualified Plutus.V1.Ledger.Address       as Address
 import qualified Plutus.V2.Ledger.Api           as PlutusV2
 import qualified PlutusTx
 import           PlutusTx.Prelude
-import           Types                          (ScriptParams (..))
+import           ENOP.Types                 
+import           ENOP.MintingPolicy
+import qualified Plutus.V1.Ledger.Value  as Value
 
-
-validator :: BuiltinData -> PlutusV2.Validator
-validator sp = PlutusV2.mkValidatorScript
-        ($$(PlutusTx.compile [|| vUt ||])
+mp :: BuiltinData -> PlutusV2.MintingPolicy
+mp sp = PlutusV2.mkMintingPolicyScript
+       ($$(PlutusTx.compile [|| vUt ||])
         `PlutusTx.applyCode` PlutusTx.liftCode sp)
 
 script :: BuiltinData -> PlutusV2.Script
-script = PlutusV2.unValidatorScript . validator
+script = PlutusV2.getMintingPolicy . mp
 
-scriptHash :: ScriptParams -> PlutusV2.ValidatorHash
-scriptHash sp = Utils.validatorHash $ validator $ PlutusTx.toBuiltinData sp
+scriptHash :: ScriptParams -> PlutusV2.MintingPolicyHash
+scriptHash sp = Utils.mintingPolicyHash $ mp (PlutusTx.toBuiltinData sp)
 
-scriptAddress :: ScriptParams -> Ledger.Address
-scriptAddress = Address.scriptHashAddress . scriptHash
+mustMintPolicyCurrencySymbol :: ScriptParams -> Value.CurrencySymbol
+mustMintPolicyCurrencySymbol = Value.mpsSymbol . scriptHash
 
 scriptAsCbor :: BuiltinData -> LB.ByteString
 scriptAsCbor = serialise . script
 
-apiScript :: ScriptParams -> PlutusScript PlutusScriptV2
-apiScript sp = PlutusScriptSerialised $ SBS.toShort $ LB.toStrict $ scriptAsCbor (PlutusTx.toBuiltinData sp)
-
+mPapiScript :: ScriptParams -> PlutusScript PlutusScriptV2
+mPapiScript sp = PlutusScriptSerialised $ SBS.toShort $ LB.toStrict $ scriptAsCbor (PlutusTx.toBuiltinData sp)

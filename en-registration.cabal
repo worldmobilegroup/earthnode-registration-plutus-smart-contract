@@ -1,9 +1,9 @@
 cabal-version:      2.4
 name:               wm-earthnode-registration
-version:            1.0.0.0
+version:            2.0.0.0
 author:             Torben Poguntke
 maintainer:         torben.poguntke@worldmobile.io
-Copyright:          © 2022 World Mobile Group
+Copyright:          © 2023 World Mobile Group
 Build-Type:         Simple
 
 
@@ -27,6 +27,10 @@ library
                     Types
                     OnChain
                     OffChain
+                    ENOP.Types
+                    ENOP.MintingPolicy
+                    ENOP.MpOffChain
+                    
   build-depends:     
                       aeson
                     , base -any
@@ -69,5 +73,6 @@ executable en-registration
                      , text
                      , serialise
                      , utf8-string
+                     , word8
                      , wm-earthnode-registration
                      

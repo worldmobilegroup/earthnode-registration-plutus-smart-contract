@@ -1,8 +1,8 @@
 {-
   Author   : Torben Poguntke
   Company  : World Mobile Group
-  Copyright: 2022
-  Version  : v0.1
+  Copyright: 2023
+  Version  : v2.0
 -}
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE DerivingVia           #-}
@@ -23,53 +23,56 @@
 {-# OPTIONS_GHC -fno-specialise               #-}
 {-# OPTIONS_GHC -fexpose-all-unfoldings       #-}
 
+import           Data.ByteString as BS
+import           Data.Word8 as W8
 import           Cardano.Api
-import           Cardano.Api.Shelley          (Address (ShelleyAddress))
-import           Cardano.Ledger.Alonzo.TxInfo (transKeyHash)
-import           Cardano.Ledger.Shelley.API   (Credential (KeyHashObj))
-import           Data.ByteString.UTF8         (fromString)
-import           Data.Text
-import           Ledger
 import           OffChain
 import           Plutus.Contract.CardanoAPI   (toCardanoAddressInEra)
 import           Plutus.V1.Ledger.Value       (currencySymbol)
 import           Prelude
 import           System.Environment           (getArgs)
+import           ENOP.Types
 import           Types
+import           ENOP.MpOffChain
 
 main :: IO ()
 main = do
     args <- getArgs
     case args of
 
-      [cs',adm',magic'] -> do
+      [magic'] -> do
         let
-            scriptFile   = "en-nft-registration-new_datum_080923.plutus"
-            pkh          = addrToPkh $ either (\_ -> error "Not a valid address") id (parseShelleyAddr adm') -- "addr_test1qqgagc0fy6nm0qe4h8zqxsg952tqjeg7l7j0agd0cx4u25zcer3t74yn0dm8xqnr7rtwhkqcrpsmphwcf0mlmn39ry6qxvept2"
-            cs = currencySymbol $ fromString cs' -- "14696a4676909f4e3cb1f2e60e2e08e5abed70caf5c02699be971139"
-            params          = ScriptParams
+            val_scriptFile  = "en-nft-registration-v2_test_ENNFTs_4c5ac6739376849c917d299a4ef3c74b44cfb1a0ebd4948877058559.plutus"
+            mp_scriptFile   = "enop-nft-mintingPolicy-v1_test_ENNFTs_4c5ac6739376849c917d299a4ef3c74b44cfb1a0ebd4948877058559.plutus"
+            -- ENNFT Policy in Bytes
+            cs = currencySymbol $ BS.pack ([76,90,198,115,147,118,132,156,145,125,41,154,78,243,199,75,68,207,177,160,235,212,148,136,119,5,133,89::W8.Word8])
+            -- 4C5AC6739376849C917D299A4EF3C74B44CFB1A0EBD4948877058559
+            -- 4c5ac6739376849c917d299a4ef3c74b44cfb1a0ebd4948877058559
+            -- Public Testnet ENNFT ([216,190,188,176,171,216,145,147,135,76,89,237,48,35,245,180,248,27,137,182,103,109,24,122,215,251,219,14::W8.Word8])
+            val_params          = Types.ScriptParams
                 {
-                    pNftCs       = cs  -- CurrencySymbol / PolicyID of ENNFT
-                  , adm          = pkh -- Admin wallet address
+                    pNftCs       = cs
                 }
             magic = case read magic' :: Integer of        -- 1..n: (Testnet (NetworkMagic n)) || 0: Mainnet
               0 -> Mainnet
               x -> Testnet (NetworkMagic $ fromInteger x)
-            address     = scriptAddress params
+            address     = scriptAddress val_params
+            vh_reg      = OffChain.scriptHash val_params
+            mp_params   = ENOP.Types.ScriptParams
+                {
+                    spNftCs            = cs
+                  , spRegContr         = vh_reg
+                }
             address'    = case toCardanoAddressInEra magic address of
                             Left err    -> error $ "cannot create bech32 contract address: " ++ show err
                             Right addr' -> serialiseAddress addr'
-        scriptResult <- writeFileTextEnvelope scriptFile Nothing $ apiScript params
-        case scriptResult of
+            cs_mp       = mustMintPolicyCurrencySymbol mp_params
+        scriptResultValidator <- writeFileTextEnvelope val_scriptFile Nothing $ apiScript val_params
+        scriptResultMintingPolicy <- writeFileTextEnvelope mp_scriptFile Nothing $ mPapiScript mp_params
+        case scriptResultValidator of
             Left err -> print $ displayError err
-            Right () -> Prelude.putStrLn $ "{\"plutus_file\":" ++ show scriptFile ++ ",\"script_address\":" ++ show address' ++ "}"
-      _ -> error "You need to provide a curency symbol, an admin address, an the networkmagic (0 == mainnet)!"
-
--- read and decode bech32 Cardano address
-parseShelleyAddr :: String -> Either Bech32DecodeError (Cardano.Api.Shelley.Address ShelleyAddr)
-parseShelleyAddr s = deserialiseFromBech32 AsShelleyAddress $ Data.Text.pack s
-
--- get PKH from bech32 address
-addrToPkh :: Cardano.Api.Shelley.Address ShelleyAddr -> PubKeyHash
-addrToPkh (ShelleyAddress _ (KeyHashObj kh) _) = transKeyHash kh
-addrToPkh _                                    = error "addrToPkh"
+            Right () -> Prelude.putStrLn $ "{\"plutus_file\":" ++ show val_scriptFile ++ ",\"script_address\":" ++ show address' ++ "}"
+        case scriptResultMintingPolicy of
+            Left err -> print $ displayError err
+            Right () -> Prelude.putStrLn $ "{\"plutus_file\":" ++ show mp_scriptFile ++ ",\"currency_symbol\":\"" ++ show cs_mp ++ "\"}"
+      _ -> error "You need to provide the networkmagic (0 == mainnet)!"
