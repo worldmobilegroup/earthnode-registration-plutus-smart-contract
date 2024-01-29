@@ -12,7 +12,3 @@ cabal run en-registration `NFT PolicyID` `Admin Wallet Address` `Network Magic`
 
 ### Testnet | Mainnet
 To generate a smart contract instance for mainnet provide a 0 as last argument. If you provide any other number than zero, you will create a testnet contract with the magic number you entered (Preprod: 1, Preview: 2, Legacy Testnet: 1097911063)
-
-## How to setup Plutus Environment
-
-Coming soon...
