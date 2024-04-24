@@ -36,18 +36,22 @@ import qualified PlutusTx.Builtins        as BI
 import           Types
 
 
+-- TODO What is the difference between ENOPNFT and ENNFT? I assumed that ENNFT
+-- is preminted and distributed to the EN operators. Then, was is ENOPNFT used
+-- for?
+
 {-- updateRegistration --}
--- ENOs can update the registration information, for that the signature of the current and the new datum is checked 
+-- ENOs can update the registration information, for that the signature of the current and the new datum is checked
 -- it is also checked if the correct ENOP-NFT is spent in this transaction.
 -- is must be ensured that the enUsedNftTn and pEnOpCs never change, this can only be done by performing a new registration
 {-# INLINABLE updateRegistration #-}
 updateRegistration :: ScriptParams -> BuiltinByteString -> ScriptContext ->  Bool
-updateRegistration ScriptParams{..} sig ctx 
+updateRegistration ScriptParams{..} sig ctx
     | checkDatumSig nDat, -- new datum signature is verifued
       checkDatumSig cDat, -- old datum signature is verified
       newDatumSigned, -- signatures of new datum by old key
       hasEnOpNft nv cDat, -- EnOpNFT is in the new output UTxO
-      hasEnOpNft cv cDat, -- EnOpNFT is spent and present in input UTxO 
+      hasEnOpNft cv cDat, -- EnOpNFT is spent and present in input UTxO
       hasEnNft cv (enUsedNftTn cDat),
       hasEnNft nv (enUsedNftTn cDat),
       opOk nDat cDat  = True -- The EnOpNFT is not changed in this update
@@ -66,6 +70,7 @@ updateRegistration ScriptParams{..} sig ctx
         opOk d1 d2 = (pEnOpCs d1) == (pEnOpCs d2) && (enUsedNftTn d1) == (enUsedNftTn d2)
 
         -- Check if the new datum was signed by the current CceAddress, the signature must be provided by the redeemer
+        -- TODO Not sure, but is this redundant with the `checkDatumSig nDat` check?
         newDatumSigned = BI.verifySchnorrSecp256k1Signature (enConsensusPubKey cDat) (makeMessage nDat) sig
 
         -- Construct the EnRegistration
@@ -78,7 +83,7 @@ updateRegistration ScriptParams{..} sig ctx
         getRegOutputDatum :: [(OutputDatum, Value)] -> (Datum, Value)
         getRegOutputDatum [((OutputDatum nd'),nv')] = (nd',nv')
         getRegOutputDatum _ = traceError "wrongOutputDatum"
-      
+
         -- get the InputDatum (Current Datum) and Value
         (cd,cv) = case findOwnInput ctx of
                     Just i -> extractTxO $ txInInfoResolved i
@@ -98,16 +103,16 @@ updateRegistration ScriptParams{..} sig ctx
         makeEnRegDatum = unsafeFromBuiltinData . getDatum
 
         info = scriptContextTxInfo ctx
-        
+
 {-# INLINABLE checkDatumSig #-}
 -- Check the signature of the registration datum
 checkDatumSig :: EnRegistration -> Bool
 checkDatumSig dat@EnRegistration {..} = BI.verifySchnorrSecp256k1Signature enConsensusPubKey (makeMessage dat) enSignature
-  
+
 {-# INLINABLE makeMessage #-}
 -- Make a signature message EnRegistrationDatum
 makeMessage :: EnRegistration -> BuiltinByteString
-makeMessage EnRegistration {..} = BI.blake2b_256 $ appendByteString (unCurrencySymbol pEnOpCs) $ consByteString enCommission $ appendByteString (getPubKeyHash enRwdWallet) $ appendByteString (unTokenName enUsedNftTn) $ appendByteString enCceAddress $ appendByteString enMerkleTreeRoot $ appendByteString enOperatorAddress enConsensusPubKey 
+makeMessage EnRegistration {..} = BI.blake2b_256 $ appendByteString (unCurrencySymbol pEnOpCs) $ consByteString enCommission $ appendByteString (getPubKeyHash enRwdWallet) $ appendByteString (unTokenName enUsedNftTn) $ appendByteString enCceAddress $ appendByteString enMerkleTreeRoot $ appendByteString enOperatorAddress enConsensusPubKey
 
 
 {-# INLINABLE validateUnregister #-}
@@ -117,6 +122,7 @@ validateUnregister ScriptParams{..} EnRegistration{..} ctx
     |   noScriptOutputs $ txInfoOutputs info
       -- the ENOPNFT must be burnt in this transaction
       , isEnOPNftBurnt
+      -- TODO You mean EnOpNFT instead of ENNFT?
       -- The ENNFT is spent in this transaction
       , Value.valueOf (V2.valueSpent info) pNftCs enUsedNftTn == 1 = True
     | otherwise = False

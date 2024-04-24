@@ -34,22 +34,22 @@ import qualified Prelude
 
 data ScriptParams = ScriptParams
         {
-              pNftCs :: CurrencySymbol
+              pNftCs :: CurrencySymbol -- ^ CurrencySymbol of the ENNFT
         } deriving (Prelude.Show, Generic, FromJSON, ToJSON, Prelude.Eq, Prelude.Ord)
 PlutusTx.unstableMakeIsData ''ScriptParams
 PlutusTx.makeLift ''ScriptParams
 
 data EnRegistration = EnRegistration
         {
-              enOperatorAddress :: BuiltinByteString
-            , enConsensusPubKey :: BuiltinByteString
-            , enMerkleTreeRoot  :: BuiltinByteString
-            , enCceAddress      :: BuiltinByteString
-            , enUsedNftTn       :: TokenName
-            , enRwdWallet       :: PubKeyHash
-            , enCommission      :: Integer
+              enOperatorAddress :: BuiltinByteString -- ^ TODO Address of what exactly? Cardano address?
+            , enConsensusPubKey :: BuiltinByteString -- ^ TODO What is that?
+            , enMerkleTreeRoot  :: BuiltinByteString -- ^ TODO What is this used for?
+            , enCceAddress      :: BuiltinByteString -- ^ TODO What is CCE?
+            , enUsedNftTn       :: TokenName -- ^ TODO Why "used"? This is the ENNFT right? And IIUC, the token name is specific to the operator?
+            , enRwdWallet       :: PubKeyHash -- ^ TODO So that is the wallet the operator should get the rewards after participating in block production in Aya?
+            , enCommission      :: Integer -- ^ TODO What is that exactly?
             , pEnOpCs           :: CurrencySymbol -- We cannot store the EnOpNft CurrencySymbol in the parameter because we get a cyclic dependency
-            , enSignature       :: BuiltinByteString
+            , enSignature       :: BuiltinByteString -- ^ TODO Signature of what exactly?
         } deriving (Prelude.Show, Generic, FromJSON, ToJSON, Prelude.Eq, Prelude.Ord)
 PlutusTx.makeIsDataIndexed ''EnRegistration [('EnRegistration, 0)]
 PlutusTx.makeLift ''EnRegistration
