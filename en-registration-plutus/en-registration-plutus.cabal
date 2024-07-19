@@ -1,0 +1,101 @@
+cabal-version:      3.0
+name:               en-registration-plutus
+version:            2.0.0.0
+author:             Nicolas Henin
+maintainer:         mr.henin@gmail.com
+copyright:          © 2023 World Mobile Group
+build-type:         Simple
+extra-source-files: CHANGELOG.md
+data-files:         tests/unit/data/generatedSubstrateEd25519Keys.json
+
+flag defer-plugin-errors
+  description:
+    Defer errors from the plugin, useful for things like Haddock that can't handle it.
+
+  default:     False
+  manual:      True
+
+library
+  hs-source-dirs:   plutus
+  default-language: Haskell2010
+  ghc-options:
+    -Wall -Wno-missed-extra-shared-lib -fobject-code
+    -fno-ignore-interface-pragmas -fno-omit-interface-pragmas
+    -fplugin-opt PlutusTx.Plugin:defer-errors
+
+  exposed-modules:
+    Adapter.Plutus.OffChain
+    Adapter.Plutus.OnChain
+    Aya.Registration.Core.ENOPNFT.MonetaryPolicy.Builder
+    Aya.Registration.Core.ENOPNFT.MonetaryPolicy.OnChain
+    Aya.Registration.Core.Property.Datum.Register
+    Aya.Registration.Core.Property.NFT.Ownership.Deregister
+    Aya.Registration.Core.Property.NFT.Ownership.Register
+    Aya.Registration.Core.Property.NFT.Ownership.UniqueSigner
+    Aya.Registration.Core.Property.NFT.Transitivity.Deregister
+    Aya.Registration.Core.Property.NFT.Transitivity.Register
+    Aya.Registration.Core.Property.NFT.Transitivity.Update
+    Aya.Registration.Core.Property.Violation
+    Aya.Registration.Core.Validator.Builder
+    Aya.Registration.Core.Validator.OnChain
+
+  build-depends:
+    , aeson
+    , base >=4.9 && <5
+    , bytestring
+    , plutus-ledger-api
+    , plutus-script-utils
+    , plutus-tx
+    , plutus-tx-plugin
+    , serialise
+
+test-suite en-registration-unit-tests
+  hs-source-dirs:   tests/unit
+  type:             exitcode-stdio-1.0
+  default-language: Haskell2010
+  main-is:          Main.hs
+  other-modules:
+    Adapter.CardanoCryptoClass.Crypto
+    Adapter.Cooked
+    Adapter.Plutus.Gen
+    Specs.Aya.Registration.Core.Deregister.NominalCase
+    Specs.Aya.Registration.Core.Deregister.TxBuilding
+    Specs.Aya.Registration.Core.Model
+    Specs.Aya.Registration.Core.Property.Datum.Register.Violations
+    Specs.Aya.Registration.Core.Property.Datum.Update.Violations
+    Specs.Aya.Registration.Core.Property.NFT.Ownership.Deregister.Violations
+    Specs.Aya.Registration.Core.Property.NFT.Ownership.Register.Violations
+    Specs.Aya.Registration.Core.Property.NFT.Ownership.Update.Violations
+    Specs.Aya.Registration.Core.Property.NFT.Transitivity.Deregister.Violations
+    Specs.Aya.Registration.Core.Property.NFT.Transitivity.Register.Violations
+    Specs.Aya.Registration.Core.Property.NFT.Transitivity.Update.Violations
+    Specs.Aya.Registration.Core.Register.Fixture
+    Specs.Aya.Registration.Core.Register.NominalCase
+    Specs.Aya.Registration.Core.Register.TxBuilding
+    Specs.Aya.Registration.Core.Update.NominalCase
+    Specs.Aya.Registration.Core.Update.TxBuilding
+
+  build-depends:
+    , aeson
+    , base >=4.9 && <5
+    , bytestring
+    , cardano-api
+    , cardano-crypto-class
+    , cardano-node-emulator
+    , containers
+    , cooked-validators
+    , data-default
+    , en-registration-plutus
+    , hex-text
+    , nonempty-containers
+    , plutus-ledger
+    , plutus-ledger-api
+    , plutus-script-utils
+    , plutus-tx
+    , safe
+    , tasty
+    , tasty-hunit
+    , tasty-quickcheck
+    , text
+
+  ghc-options:      -Wall -threaded
